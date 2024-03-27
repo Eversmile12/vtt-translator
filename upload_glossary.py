@@ -1,4 +1,5 @@
 import json
+import os
 from google.cloud import  storage
 from google.cloud import translate_v3 as translate
 import requests
@@ -8,6 +9,7 @@ location = "us-central1"
 
 
 def delete_glossary(
+    glossary_id,
     timeout: int = 180,
 ) -> translate.Glossary:
     """Delete a specific glossary based on the glossary ID.
@@ -39,12 +41,12 @@ def upload_glossary_to_bucket(bucket_name: str, glossary_file_path: str, destina
     blob.upload_from_filename(glossary_file_path)
     print(f"File {glossary_file_path} uploaded to {destination_blob_name}.")
 
-def upload_glossary(uri,target_language):
+def upload_glossary(uri,target_language,glossary_id):
 
     url = f'https://translation.googleapis.com/v3/projects/{project_id}/locations/{location}/glossaries'
     # print(os.environ["ACCESS_TOKEN"])
     headers = {
-        "Authorization": f"Bearer ya29.a0AfB_byDY3Var3uN_hMS8PNRteTArEYQja-ar7mvy_u0tXUshqFbguSlG19hj9pw8OSg7yUKKtUQAr0wfMED5X9oT5C4oyYeUZN0C5yI8B6OLzuKTQR6epHxvQWz0-xVxm3Qpk7XkVxQbOpBGMKoJ4HVa6iBkUKLNESEX6vHj2ngaCgYKAUASARISFQHGX2MiqenbVnQQ1_Xie1Hw3vHycQ0178",
+        "Authorization": f"Bearer {os.environ["GOOGLE_BEARER"]}",
         "Content-Type": "application/json; charset=utf-8",
         "x-goog-user-project": "fluid-unfolding-412101"
     }
@@ -63,34 +65,35 @@ def upload_glossary(uri,target_language):
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
-    
+    print(response.content)
     if response.status_code == 200:
         print("Status code:", response.status_code)
         print("Response:", response.text)
         print("Glossary uploaded successfully.")
     elif response.status_code == 409:
-        delete_glossary()
-        upload_glossary(uri, target_language)
+        delete_glossary(glossary_id)
+        upload_glossary(uri, target_language,glossary_id)
 
     return response
 
 
 
-def main(glossary_id: str,bucket_name, target_language):
+def update_glossaries(glossary_id: str,bucket_name, target_language):
     glossary_file_name = f"{glossary_id}.csv"
     glossary_file_path = f"./glossaries/{glossary_file_name}"
     destination_blob_name = f"glossaries/{glossary_file_name}"
     upload_glossary_to_bucket(bucket_name, glossary_file_path, destination_blob_name)
 
     glossary_uri = f"gs://{bucket_name}/{destination_blob_name}"
-    upload_glossary(glossary_uri, target_language)
+    print(glossary_uri)
+    upload_glossary(glossary_uri, target_language,glossary_id)
 
 
 if __name__=="__main__":
-    bucket_name = "translation-glossaries-updraft"
-    glossary_id ="en_it_glossary"
+    bucket_name = os.environ["BUCKET_NAME"]
+    glossary_id =f"en_fa_glossary"
     target_language="it"
-    main(glossary_id,bucket_name, target_language)
+    update_glossaries(glossary_id, bucket_name, target_language)
 # Example usage
 
 

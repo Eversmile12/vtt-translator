@@ -4,7 +4,11 @@ import time
 from multiprocessing import Pool
 from google.cloud import translate
 import google.api_core.exceptions
+from upload_glossary import update_glossaries
+from dotenv import load_dotenv
+
 # from google.cloud import translate_v2 as translate
+load_dotenv()
 
 # @dev: This function scans a given directory for files and determines which of the expected languages are missing translations.
 # @params: 
@@ -81,17 +85,16 @@ def translate_text_v3(target_language: str, segments: list) -> list:
 
     translate_client = translate.TranslationServiceClient()
 
-    location = "us-central1"
-    project_id = "fluid-unfolding-412101"
+    location = os.environ["PROJECT_LOCATION"]
+    project_id = os.environ["PROJECT_ID"]
     parent = f"projects/{project_id}/locations/{location}"
     glossary_name = f"en_{target_language.lower()}_glossary"
     translated_segments = []
-    if target_language == "es" or target_language == "it":
-        glossary = translate_client.glossary_path(
-            project_id, "us-central1", glossary_name  # The location of the glossary
-        )
+    glossary = translate_client.glossary_path(
+        project_id,location , glossary_name  # The location of the glossary
+    )
 
-        glossary_config = translate.TranslateTextGlossaryConfig(glossary=glossary)
+    glossary_config = translate.TranslateTextGlossaryConfig(glossary=glossary)
 
     retry_delay = 1  # Initial delay in seconds
     max_retries = 10  # Maximum number of retries
@@ -274,6 +277,12 @@ def main():
     # See https://g.co/cloud/translate/v2/translate-reference#supported_languages
     # """
     existing_languages = ["it", "fr", "tr", "bg", "ru", "fa", "vi", "es","pt","id","zh","ja"]
+
+    for language in existing_languages:
+        bucket_name = os.environ["BUCKET_NAME"]
+        glossary_id =f"en_{language}_glossary"
+        target_language=language
+        update_glossaries(glossary_id, bucket_name, target_language)
     multi_process_batch_translate_vtt_folder('courses', existing_languages)
 
 if __name__ == '__main__':

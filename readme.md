@@ -1,4 +1,4 @@
-# Video Subtitles Translator README
+# Video Subtitles Translator
 
 The Video Subtitles Translator is a powerful tool designed to automate the translation of VTT subtitle files into multiple languages leveraging the Google Cloud Translation API. It streamlines the process of identifying untranslated files in a specified directory and employs multiprocessing to enhance the speed of translations.
 
@@ -23,7 +23,7 @@ Before you begin, ensure you have the following:
    
    Clone this repository to your local machine using the following command:
    ```bash
-   git clone [Repository URL]
+   git clone [Repository URL](https://github.com/Eversmile12/vtt-translator)
    ```
    
 2. **Set Up a Virtual Environment**
